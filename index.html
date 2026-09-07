@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Player de Música</title>
+    <title>Meu Player de Música Premium</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -51,6 +52,27 @@
             transition: fill 0.2s;
         }
         .svg-icon:hover { fill: #ffffff; }
+
+        /* Barra de Pesquisa */
+        .search-bar-container {
+            padding: 0 16px 10px 16px;
+            display: flex;
+            gap: 8px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: #1f1f1f;
+            border: 1px solid #333;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #1a73e8;
+        }
 
         .nav-tabs {
             display: flex;
@@ -214,20 +236,38 @@
             flex-grow: 1;
         }
 
+        .btn-action-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
         .btn-play-all {
             background-color: #1a73e8;
             color: #fff;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 700;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            width: fit-content;
-            margin-top: 4px;
+        }
+
+        .btn-add-to-pl {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .songs-list-header {
@@ -312,6 +352,7 @@
             cursor: pointer;
             z-index: 50;
             overflow: hidden;
+            transition: background-color 0.5s ease;
         }
 
         .mini-progress-bar {
@@ -334,7 +375,7 @@
 
         .mini-controls { display: flex; align-items: center; gap: 8px; }
 
-        /* Full Screen Player */
+        /* Full Screen Player Dinâmico */
         .fullscreen-player {
             position: fixed;
             top: 100%;
@@ -343,13 +384,13 @@
             width: 100%;
             max-width: 420px;
             height: 100%;
-            background-color: #121212;
+            background: linear-gradient(180deg, #222 0%, #0d0d0d 100%);
             z-index: 200;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             padding: 24px;
-            transition: top 0.3s ease-in-out;
+            transition: top 0.3s ease-in-out, background 0.5s ease;
         }
 
         .fullscreen-player.active { top: 0; }
@@ -366,7 +407,7 @@
             align-items: center;
             justify-content: center;
             margin: 20px 0;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
         }
         .fs-cover-box img { width: 100%; height: 100%; object-fit: cover; }
         .fs-cover-box svg { width: 80px; height: 80px; fill: #444; }
@@ -381,7 +422,7 @@
             -webkit-appearance: none;
             height: 4px;
             border-radius: 2px;
-            background: #333;
+            background: rgba(255, 255, 255, 0.2);
             outline: none;
             cursor: pointer;
         }
@@ -389,16 +430,16 @@
             -webkit-appearance: none;
             width: 12px; height: 12px;
             border-radius: 50%;
-            background: #1a73e8;
+            background: #fff;
             cursor: pointer;
         }
 
-        .time-stamps { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-top: 4px; }
+        .time-stamps { display: flex; justify-content: space-between; font-size: 0.75rem; color: #ccc; margin-top: 4px; }
 
         .fs-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-        .fs-btn-main { width: 60px; height: 60px; background: #1a73e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: transform 0.1s; }
+        .fs-btn-main { width: 60px; height: 60px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: transform 0.1s; }
         .fs-btn-main:active { transform: scale(0.95); }
-        .fs-btn-main svg { width: 28px; height: 28px; fill: #fff; }
+        .fs-btn-main svg { width: 28px; height: 28px; fill: #000; }
 
         /* Modais */
         .modal {
@@ -448,9 +489,13 @@
     <div class="top-bar">
         <div class="app-title">Músicas</div>
         <div class="header-actions">
-            <svg class="svg-icon" onclick="filterBySearch()" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 11.99 14 9.5 14z"/></svg>
             <svg class="svg-icon" onclick="sortSongs()" viewBox="0 0 24 24"><path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/></svg>
         </div>
+    </div>
+
+    <!-- Barra de Pesquisa em Tempo Real -->
+    <div class="search-bar-container">
+        <input type="text" id="search-input" class="search-input" placeholder="Buscar músicas ou artistas..." oninput="handleSearch(this.value)">
     </div>
 
     <div class="nav-tabs" id="nav-tabs">
@@ -462,15 +507,16 @@
     <div class="content">
         <label for="audio-upload" id="upload-card" class="card-add">
             <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            <span class="add-text">Adicionar novas músicas</span>
+            <span class="add-text">Adicionar músicas ou pasta</span>
         </label>
-        <input type="file" id="audio-upload" accept="audio/*" multiple>
+        <input type="file" id="audio-upload" accept="audio/*" multiple webkitdirectory directory>
 
         <div id="playlists-tab-header" style="display:none; margin-bottom:12px;">
             <button class="btn-modal btn-primary" style="width:100%;" onclick="openCreatePlaylistModal()">+ Criar Nova Playlist</button>
         </div>
 
-        <div id="cards-section">
+        <!-- Músicas Curtidas (Exclusiva da Aba de Playlists) -->
+        <div id="cards-section" style="display:none;">
             <div class="playlist-card" onclick="openPlaylistView('liked')">
                 <div class="card-icon-box liked-box">
                     <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -484,7 +530,7 @@
 
         <div id="user-playlists-section" style="display:none;"></div>
 
-        <!-- Detalhes da Playlist -->
+        <!-- Visão Detalhada da Playlist -->
         <div class="playlist-header-view" id="playlist-header-view" style="display:none;">
             <div class="playlist-header-overlay"></div>
             <div class="playlist-header-content">
@@ -498,10 +544,15 @@
                     <div class="playlist-header-info">
                         <div class="card-title" id="pl-view-title" style="font-size:1.2rem;">Nome da Playlist</div>
                         <div class="card-sub" id="pl-view-sub">0 músicas</div>
-                        <button class="btn-play-all" onclick="playCurrentPlaylistAll()">
-                            <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff;"><path d="M8 5v14l11-7z"/></svg>
-                            Tocar Tudo
-                        </button>
+                        <div class="btn-action-group">
+                            <button class="btn-play-all" onclick="playCurrentPlaylistAll()">
+                                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff;"><path d="M8 5v14l11-7z"/></svg>
+                                Tocar
+                            </button>
+                            <button class="btn-add-to-pl" id="btn-add-songs-to-pl" onclick="openAddSongsToPlaylistModal()">
+                                + Músicas
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -514,7 +565,7 @@
     </div>
 
     <!-- Mini Player -->
-    <div class="mini-player" onclick="openFullscreenPlayer()">
+    <div class="mini-player" id="mini-player-bar" onclick="openFullscreenPlayer()">
         <div class="mini-progress-bar" id="mini-progress"></div>
         <div class="mini-player-info">
             <div class="mini-thumb" id="mini-thumb">
@@ -533,7 +584,7 @@
     </div>
 </div>
 
-<!-- Player Expandido -->
+<!-- Player Expandido em Tela Cheia -->
 <div class="fullscreen-player" id="fullscreen-player">
     <div class="fs-header">
         <svg class="svg-icon" onclick="closeFullscreenPlayer()" viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
@@ -608,14 +659,14 @@
     </div>
 </div>
 
-<!-- Modal Adicionar Músicas da Playlist -->
+<!-- Modal Adicionar Músicas Dentro da Playlist -->
 <div class="modal" id="add-songs-modal" onclick="closeModalOnBackdrop(event, 'add-songs-modal')">
     <div class="modal-body">
-        <h3>Adicionar Músicas</h3>
+        <h3>Adicionar Músicas à Playlist</h3>
         <div id="add-songs-list" class="checkbox-list"></div>
         <div class="btn-group">
             <button class="btn-modal btn-secondary" onclick="closeModal('add-songs-modal')">Cancelar</button>
-            <button class="btn-modal btn-primary" onclick="confirmAddSongs()">Confirmar</button>
+            <button class="btn-modal btn-primary" onclick="confirmAddSongsToPlaylist()">Confirmar</button>
         </div>
     </div>
 </div>
@@ -633,6 +684,7 @@
 
 <script>
     const jsmediatags = window.jsmediatags;
+    const colorThief = new ColorThief();
     const audioUpload = document.getElementById('audio-upload');
     const audioPlayer = document.getElementById('audio-player');
     const miniTitle = document.getElementById('mini-title');
@@ -646,7 +698,6 @@
     let currentViewSongs = [];
     let playlists = [];
     let editingPlaylistId = null;
-    let selectedPlaylistForSongs = null;
     let selectedCoverBase64 = null;
     let selectedBgBase64 = null;
     let currentIndex = -1;
@@ -656,7 +707,7 @@
     let isShuffle = false;
     let isLoop = false;
 
-    // Persistência com IndexedDB
+    // Conexão com IndexedDB
     let db;
     const request = indexedDB.open("MusicPlayerDB", 1);
     request.onupgradeneeded = e => {
@@ -713,6 +764,7 @@
         const files = Array.from(e.target.files);
 
         files.forEach(file => {
+            if (!file.type.startsWith('audio/')) return;
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const arrayBuffer = evt.target.result;
@@ -812,7 +864,7 @@
         if (tab === 'playlists') {
             playlistsHeader.style.display = 'block';
             userPlSection.style.display = 'block';
-            cardsSection.style.display = 'block';
+            cardsSection.style.display = 'block'; // Exibe o card de Curtidas apenas aqui
             listTitleUI.textContent = "Sua Biblioteca";
             renderPlaylistsCards();
             renderSongsList([]);
@@ -825,7 +877,7 @@
         } else {
             playlistsHeader.style.display = 'none';
             userPlSection.style.display = 'none';
-            cardsSection.style.display = 'block';
+            cardsSection.style.display = 'none';
             listTitleUI.textContent = "Todas as Músicas";
             currentViewSongs = [...allSongs];
             renderSongsList(currentViewSongs);
@@ -853,6 +905,7 @@
         const coverBox = document.getElementById('pl-view-cover');
         const titleEl = document.getElementById('pl-view-title');
         const subEl = document.getElementById('pl-view-sub');
+        const btnAdd = document.getElementById('btn-add-songs-to-pl');
 
         if (playlistOrType === 'liked') {
             headerView.style.backgroundImage = 'none';
@@ -861,10 +914,12 @@
             titleEl.textContent = 'Músicas Curtidas';
             currentViewSongs = allSongs.filter(s => s.isLiked);
             subEl.textContent = `${currentViewSongs.length} música(s)`;
+            btnAdd.style.display = 'none';
         } else {
             const pl = playlists.find(p => p.id === playlistOrType);
             if (!pl) return exitPlaylistView();
 
+            btnAdd.style.display = 'inline-flex';
             if (pl.bgUrl) {
                 headerView.style.backgroundImage = `url(${pl.bgUrl})`;
             } else {
@@ -892,10 +947,10 @@
         activePlaylistContext = null;
         document.getElementById('playlist-header-view').style.display = 'none';
         document.getElementById('upload-card').style.display = 'flex';
-        document.getElementById('cards-section').style.display = 'block';
         document.getElementById('nav-tabs').style.display = 'flex';
 
         if (currentTab === 'playlists') {
+            document.getElementById('cards-section').style.display = 'block';
             document.getElementById('user-playlists-section').style.display = 'block';
             document.getElementById('playlists-tab-header').style.display = 'block';
         }
@@ -1005,13 +1060,52 @@
         document.getElementById('fs-title').textContent = song.name;
         document.getElementById('fs-artist').textContent = song.artistName;
 
-        const thumbHTML = song.coverUrl ? `<img src="${song.coverUrl}">` : '<svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>';
+        const thumbHTML = song.coverUrl ? `<img id="img-cover-dynamic" src="${song.coverUrl}" crossorigin="anonymous">` : '<svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>';
         miniThumb.innerHTML = thumbHTML;
-        document.getElementById('fs-cover').innerHTML = song.coverUrl ? `<img src="${song.coverUrl}">` : '<svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>';
+        document.getElementById('fs-cover').innerHTML = thumbHTML;
 
+        // Atualização Dinâmica da Cor com base na Capa
+        if (song.coverUrl) {
+            const imgEl = document.getElementById('img-cover-dynamic');
+            imgEl.onload = function() {
+                try {
+                    const color = colorThief.getColor(imgEl);
+                    const rgbColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                    const darkRgb = `rgb(${Math.floor(color[0]*0.2)}, ${Math.floor(color[1]*0.2)}, ${Math.floor(color[2]*0.2)})`;
+                    
+                    document.getElementById('fullscreen-player').style.background = `linear-gradient(180deg, ${rgbColor} 0%, ${darkRgb} 100%)`;
+                    document.getElementById('mini-player-bar').style.backgroundColor = darkRgb;
+                } catch(e) { resetPlayerColors(); }
+            };
+        } else {
+            resetPlayerColors();
+        }
+
+        setupMediaSession(song);
         updatePlayStateUI(true);
         updateLikeBtnUI(song.isLiked);
         refreshCurrentTab();
+    }
+
+    function resetPlayerColors() {
+        document.getElementById('fullscreen-player').style.background = 'linear-gradient(180deg, #222 0%, #0d0d0d 100%)';
+        document.getElementById('mini-player-bar').style.backgroundColor = '#1e1e1e';
+    }
+
+    // Suporte para Notificação de Controle estilo Spotify/Lark Player (Media Session API)
+    function setupMediaSession(song) {
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: song.name,
+                artist: song.artistName,
+                artwork: song.coverUrl ? [{ src: song.coverUrl, sizes: '512x512', type: 'image/png' }] : []
+            });
+
+            navigator.mediaSession.setActionHandler('play', () => togglePlay());
+            navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+            navigator.mediaSession.setActionHandler('previoustrack', () => playPrevTrack());
+            navigator.mediaSession.setActionHandler('nexttrack', () => playNextTrack());
+        }
     }
 
     function togglePlay() {
@@ -1022,9 +1116,11 @@
         if (audioPlayer.paused) {
             audioPlayer.play();
             updatePlayStateUI(true);
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
         } else {
             audioPlayer.pause();
             updatePlayStateUI(false);
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
         }
     }
 
@@ -1124,7 +1220,50 @@
         document.getElementById('fullscreen-player').classList.remove('active');
     }
 
-    /* Gestão de Playlists & Modais */
+    /* Modal Adicionar Músicas na Playlist */
+    function openAddSongsToPlaylistModal() {
+        if (!activePlaylistContext || activePlaylistContext === 'liked') return;
+        const pl = playlists.find(p => p.id === activePlaylistContext);
+        if (!pl) return;
+
+        const container = document.getElementById('add-songs-list');
+        container.innerHTML = '';
+
+        if (allSongs.length === 0) {
+            container.innerHTML = '<div style="color:#aaa; font-size:0.85rem;">Nenhuma música na biblioteca para adicionar.</div>';
+        } else {
+            allSongs.forEach(song => {
+                const isChecked = pl.songIds.includes(song.id);
+                const label = document.createElement('label');
+                label.className = 'checkbox-item';
+                label.innerHTML = `
+                    <input type="checkbox" value="${song.id}" ${isChecked ? 'checked' : ''}>
+                    <span>${song.name} - <small style="color:#888;">${song.artistName}</small></span>
+                `;
+                container.appendChild(label);
+            });
+        }
+        openModal('add-songs-modal');
+    }
+
+    function confirmAddSongsToPlaylist() {
+        if (!activePlaylistContext) return;
+        const pl = playlists.find(p => p.id === activePlaylistContext);
+        if (!pl) return;
+
+        const checkboxes = document.querySelectorAll('#add-songs-list input[type="checkbox"]');
+        const selectedIds = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) selectedIds.push(cb.value);
+        });
+
+        pl.songIds = selectedIds;
+        savePlaylistToDB(pl);
+        closeModal('add-songs-modal');
+        refreshCurrentTab();
+    }
+
+    /* Modais Gerais de Playlist */
     function openCreatePlaylistModal() {
         editingPlaylistId = null;
         selectedCoverBase64 = null;
@@ -1224,14 +1363,16 @@
         }
     }
 
-    function filterBySearch() {
-        const query = prompt("Digite para buscar (Música ou Artista):");
-        if (query !== null) {
-            const q = query.toLowerCase().trim();
-            currentViewSongs = allSongs.filter(s => s.name.toLowerCase().includes(q) || s.artistName.toLowerCase().includes(q));
-            listTitleUI.textContent = `Busca: "${query}"`;
-            renderSongsList(currentViewSongs);
+    // Busca Integrada em Tempo Real
+    function handleSearch(query) {
+        const q = query.toLowerCase().trim();
+        if (!q) {
+            refreshCurrentTab();
+            return;
         }
+        const filtered = allSongs.filter(s => s.name.toLowerCase().includes(q) || s.artistName.toLowerCase().includes(q));
+        listTitleUI.textContent = `Resultado da busca: "${query}"`;
+        renderSongsList(filtered);
     }
 
     function sortSongs() {
